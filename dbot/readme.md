@@ -1,6 +1,6 @@
 Нестандартные модули:
-cachetools
-redis
-discord
-aiohttp
-aiomysql
+`cachetools`
+`redis`
+`discord`
+`aiohttp`
+`aiomysql`
