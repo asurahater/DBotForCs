@@ -45,6 +45,7 @@ DB_NAME = 'create_test'  # Имя базы данных
 # Порт веб-сервера, на котором будет работать приложение
 WEB_HOST_ADDRESS = '0.0.0.0'
 WEB_SERVER_PORT = 8080
+WEB_ALLOWED_IPS = ['127.0.0.1']
 
 # redis (универсальные значения)
 REDIS_HOST = '127.0.0.1'
