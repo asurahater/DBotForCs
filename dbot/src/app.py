@@ -16,7 +16,7 @@ import cs_server.cs_server
 
 app_info = {
   'name': 'Ultra disBot',
-  'version': '0.3',
+  'version': '0.3.1',
   'author': 'Asura',
   'description': 'Bot for connecting discord and cs server'
 }
