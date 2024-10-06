@@ -40,8 +40,8 @@ async def get_status():
     await observer.notify(Event.CS_DISCONNECTED)
 
 # -- on_ready connect
-@nsroute.create_route("/connect_to_cs")
 @observer.subscribe(Event.BE_READY)
+@nsroute.create_route("/connect_to_cs")
 async def connect():
   try:
     await cs_server.connect_to_server()
