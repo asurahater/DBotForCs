@@ -53,9 +53,17 @@ async def setup_hook():
 async def status_task():
   await observer.notify(Event.BT_CS_Status)
 
+# -- (task) cs_connect_task
+@discord.ext.tasks.loop(seconds=config.CS_RECONNECT_INTERVAL)
+async def cs_connect_task():
+  await nsroute.call_route("/connect_to_cs") 
+
 # -- ev_cs_connected
 @observer.subscribe(Event.CS_CONNECTED)
 async def ev_cs_connected():
+  if cs_connect_task.is_running():
+    cs_connect_task.cancel()
+
   if not status_task.is_running():
     status_task.start()
 
@@ -65,5 +73,5 @@ async def ev_cs_disconnected():
   if status_task.is_running():
     status_task.cancel()
 
-  await asyncio.sleep(10)
-  await nsroute.call_route("/connect_to_cs")
+  if not cs_connect_task.is_running():
+    cs_connect_task.start()

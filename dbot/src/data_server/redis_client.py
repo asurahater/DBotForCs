@@ -46,6 +46,8 @@ class AsyncRedisClient:
     self.db: int = db
     self.pool = None
 
+    self.connected: bool = False
+
   # -- connect()
   async def connect(self) -> None:
     """Подключение к Redis с использованием пула соединений."""
@@ -54,8 +56,24 @@ class AsyncRedisClient:
 
       async with aioredis.Redis.from_pool(self.pool) as conn:
         await conn.ping()
+        self.connected = True
     except aioredis.RedisError as e:
+      self.connected = False
       raise RedisConnectionError(f"Ошибка подключения к Redis: {e}")
+
+  # -- is_connected()
+  async def is_connected(self) -> bool:
+    """Проверяет, подключен ли клиент к Redis."""
+    if not self.pool or not self.connected:
+      return False
+
+    try:
+      async with aioredis.Redis.from_pool(self.pool) as conn:
+        await conn.ping()
+        return True
+    except aioredis.RedisError:
+      return False
+
 
   # -- set_hash()
   async def set_hash(self, table: str, key: str, value: Union[str, bytes]) -> None:
@@ -170,5 +188,6 @@ class AsyncRedisClient:
     """Закрывает соединение с Redis."""
     if self.pool:
       await self.pool.disconnect()
+      self.connected = False
       
 # !SECTION

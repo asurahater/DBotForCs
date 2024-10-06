@@ -1,5 +1,5 @@
 from observer.observer_client import observer, logger, nsroute, Event, Param
-from data_server.asyncsql import AioMysql, QueryError
+from data_server.asyncsql import AioMysql, QueryError, ConnectionError as aioConnectionError
 
 import discord
 import re
@@ -17,17 +17,20 @@ mysql: AioMysql = AioMysql(host=config.DB_HOST,
 # -- @require_connection
 def require_connection(func) -> callable:
   
-  async def wrapper(data) -> callable:
+  async def wrapper(*args, **kwargs) -> callable:
     if mysql.is_connected():
-      return await func(data)
+      return await func(*args, **kwargs)
     else:
-      await data[Param.Interaction].followup.send('Нет соединения с базой данных', ephemeral=True)
+      if 'data' in kwargs and kwargs['data']:
+        await kwargs['data'][Param.Interaction].followup.send('Нет соединения с базой данных', ephemeral=True)
+        
       logger.error("MySQL: Нет связи с БД")
       return
   
   return wrapper
 
 # -- steam_record_exist
+@require_connection
 async def steam_record_exist(user_id: str, steam_id: str):
   query = "SELECT COUNT(*) FROM users WHERE discord_id = %s OR steam_id = %s"
   query_values = (user_id, steam_id)
@@ -45,6 +48,7 @@ async def steam_record_exist(user_id: str, steam_id: str):
     logger.error(f"{err}")
 
 # -- map_record_exist
+@require_connection
 async def map_record_exist(map_name: str):
   query = "SELECT COUNT(*) FROM maps WHERE map_name = %s"
   query_values = (map_name,)
@@ -75,7 +79,7 @@ async def ev_ready():
   try:
     await mysql.connect()
     logger.info("MySQL: Успешно подключен")
-  except ConnectionError as err:
+  except aioConnectionError as err:
     logger.error(f"MySQL: {err}")
 
 # -- ev_reg
@@ -137,6 +141,7 @@ async def ev_unreg(data):
     
 # -- ev_map_add
 @observer.subscribe(Event.BC_DB_MAP_ADD)
+@require_connection
 async def ev_map_add(data):
   interaction: discord.Interaction = data[Param.Interaction]
 
@@ -169,6 +174,7 @@ async def ev_map_add(data):
 
  # -- ev_map_delete
 @observer.subscribe(Event.BC_DB_MAP_DELETE)
+@require_connection
 async def ev_map_delete(data):
   interaction: discord.Interaction = data[Param.Interaction]
 
@@ -191,6 +197,7 @@ async def ev_map_delete(data):
     
  # -- ev_map_update
 @observer.subscribe(Event.BC_DB_MAP_UPDATE)
+@require_connection
 async def ev_map_update(data):
   interaction: discord.Interaction = data[Param.Interaction]
 
@@ -245,6 +252,7 @@ async def ev_map_update(data):
     
 # -- (route) check_user
 @nsroute.create_route("/check_user")
+@require_connection
 async def route_check_user(steam_id):
   query = "SELECT discord_id FROM users WHERE steam_id = %s"
   query_values = (steam_id, )
@@ -263,6 +271,7 @@ async def route_check_user(steam_id):
 
 # - (route) get_map_list
 @nsroute.create_route("/get_map_list")
+@require_connection
 async def route_get_map_list():
   query = "SELECT map_name, activated FROM maps"
 

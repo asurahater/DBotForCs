@@ -76,8 +76,8 @@ class Observer:
     """
     if event.value in self._subscribers:
       for callback in self._subscribers[event.value]:
-        await asyncio.sleep(0)  # Позволяет другим задачам выполняться
-        await callback(*args, **kwargs) 
+        # await asyncio.sleep(0)  # Позволяет другим задачам выполняться
+        await callback(*args, **kwargs)
 
 # !SECTION
 
@@ -95,11 +95,11 @@ class NoServerRoute:
     
     return decorator
   
-  def call_route(self, route: str, *argc, **kwargs):
+  async def call_route(self, route: str, *argc, **kwargs):
     if not route in self._routes:
       return None
     
-    return self._routes[route](*argc, **kwargs)
+    return await self._routes[route](*argc, **kwargs)
 
 
 # !SECTION

@@ -27,6 +27,23 @@ rc: AsyncRC = AsyncRC(host=config.REDIS_HOST,
 
 cache_players: TTLCache = TTLCache(maxsize=32, ttl=120)
 
+# SECTION
+
+def require_connection(func) -> callable:
+  
+  async def wrapper(*args, **kwargs) -> callable:
+    if not rc.connected:
+      return
+    
+    if not (await rc.is_connected()):
+      return
+
+    return await func(*args, **kwargs)
+  
+  return wrapper
+
+# !SECTION
+
 # -- run_rc
 @observer.subscribe(Event.BE_READY)
 async def run_rc():
@@ -39,6 +56,7 @@ async def run_rc():
 # -- ev_add_ban
 @observer.subscribe(Event.BC_CS_BAN)
 @observer.subscribe(Event.BC_CS_BAN_OFFLINE)
+@require_connection
 async def ev_add_ban(data):
   """
     Добавляет игрока в список забанненых
@@ -47,6 +65,7 @@ async def ev_add_ban(data):
 
 # -- ev_unban_ban
 @observer.subscribe(Event.BC_CS_UNBAN)
+@require_connection
 async def ev_unban_ban(data):
   """
     Убирает игрока из списка забанненых
@@ -55,6 +74,7 @@ async def ev_unban_ban(data):
 
 # -- ev_add_players_to_list
 @observer.subscribe(Event.WBH_INFO)
+@require_connection
 async def ev_add_players_to_list(data):
   """
     Добавляет игроков в список LastPlayers
@@ -70,7 +90,8 @@ async def ev_add_players_to_list(data):
 
 # -- ev_sync_maps
 @observer.subscribe(Event.BC_CS_SYNC_MAPS)
-async def ev_sync_maps(data):
+@require_connection
+async def ev_sync_maps(*args):
   """
     Удаляем все карты из редис
     Берем карты из SQL и добавляем их в редис
@@ -120,39 +141,46 @@ async def check_steam(steam_id: str):
 
 # -- route_get_offline_players
 @nsroute.create_route("/redis/get_offline_players")
+@require_connection
 async def route_get_offline_players():
   last_players = (await rc.list_get(RedisTable.LastPlayers, 0))
   return [player.decode('utf-8') for player in last_players]
 
 # -- route_get_banned_players
 @nsroute.create_route("/redis/get_banned_players")
+@require_connection
 async def route_get_banned_players():
   banned_players = (await rc.list_get(RedisTable.BannedPlayers, 0))
   return [player.decode('utf-8') for player in banned_players]
 
 # -- route_get_map_list_active
 @nsroute.create_route("/redis/get_map_list_active")
+@require_connection
 async def route_get_map_list_active():
   map_list = (await rc.list_get(RedisTable.MapListActive, 0))
   return [map.decode('utf-8') for map in map_list]
 
 # -- route_get_map_list_all
 @nsroute.create_route("/redis/get_map_list_all")
+@require_connection
 async def route_get_map_list_all():
   map_list = (await rc.list_get(RedisTable.MapListAll, 0 ))
   return [map.decode('utf-8') for map in map_list]
 
 # -- route_update_map_list
 @nsroute.create_route("/redis/update_map_list")
+@require_connection
 async def route_update_map_list(type, map_name, activated=None):
   if type == "add":
     await rc.list_add(RedisTable.MapListAll, map_name)
     if activated == 1:
       await rc.list_add(RedisTable.MapListActive, map_name)
+
     
   elif type == "delete":
     await rc.list_delete(RedisTable.MapListAll, map_name)
     await rc.list_delete(RedisTable.MapListActive, map_name)
+
     
   elif type == "update":
     if activated is None:
