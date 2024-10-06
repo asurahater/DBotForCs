@@ -1,4 +1,4 @@
-from observer.observer_client import nsroute, observer, Event
+from observer.observer_client import nsroute, observer, Event, logger
 import discord
 
 cache_online_players: set = {}
@@ -10,20 +10,21 @@ async def ev_online_players(data):
 
 async def players_online(interaction: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
   global cache_online_players
-  filter_players = [player_name for player_name in cache_online_players if current.lower() in player_name.lower()][:25]
+  filter_players: list = [player_name for player_name in cache_online_players if current.lower() in player_name.lower()][:25]
   return [discord.app_commands.Choice(name=player, value=player) for player in filter_players]
 
 async def ban_online(interaction: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
   global cache_online_players
-  filter_players = [player_name for player_name in cache_online_players if current.lower() in player_name.lower()][:25] 
+  filter_players: list = [player_name for player_name in cache_online_players if current.lower() in player_name.lower()][:25] 
   return [discord.app_commands.Choice(name=player, value=player) for player in filter_players]
 
 async def ban_offline(interaction: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
   global cache_online_players
-  offline_players = (await nsroute.call_route("/redis/get_offline_players"))
-  offline_set = set(offline_players)
-  filtered_offline_players = list(offline_set - cache_online_players)
-  filter_players = [player_name for player_name in filtered_offline_players if current.lower() in player_name.lower()][:25] 
+  offline_players: list = await nsroute.call_route("/redis/get_offline_players") or []
+
+  offline_set: set = set(offline_players)
+  filtered_offline_players: list = list(offline_set - cache_online_players)
+  filter_players: list = [player_name for player_name in filtered_offline_players if current.lower() in player_name.lower()][:25] 
   return [discord.app_commands.Choice(name=player, value=player) for player in filter_players]
 
 async def ban_minutes(interaction: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
@@ -37,17 +38,20 @@ async def ban_minutes(interaction: discord.Interaction, current: str) -> list[di
 				]
 
 async def unban(interaction: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
-  banned_players = (await nsroute.call_route("/redis/get_banned_players"))
-  filter_players = [player_name for player_name in banned_players if current.lower() in player_name.lower()][:25] 
+  banned_players: list = await nsroute.call_route("/redis/get_banned_players") or []
+
+  filter_players: list = [player_name for player_name in banned_players if current.lower() in player_name.lower()][:25] 
   return [discord.app_commands.Choice(name=player, value=player) for player in filter_players]
 
 async def maps_active(interaction: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
-  map_list = (await nsroute.call_route("/redis/get_map_list_active"))
-  filter_maps = [map_name for map_name in map_list if current.lower() in map_name.lower()][:25]
+  map_list: list = await nsroute.call_route("/redis/get_map_list_active") or []
+
+  filter_maps: list = [map_name for map_name in map_list if current.lower() in map_name.lower()][:25]
   return [discord.app_commands.Choice(name=map, value=map) for map in filter_maps]
 
 async def maps_all(interaction: discord.Interaction, current: str) -> list[discord.app_commands.Choice[str]]:
-  map_list = (await nsroute.call_route("/redis/get_map_list_all"))
-  filter_maps = [map_name for map_name in map_list if current.lower() in map_name.lower()][:25]
+  map_list: list = await nsroute.call_route("/redis/get_map_list_all") or []
+
+  filter_maps: list = [map_name for map_name in map_list if current.lower() in map_name.lower()][:25]
   return [discord.app_commands.Choice(name=map, value=map) for map in filter_maps]
 

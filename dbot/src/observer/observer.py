@@ -11,6 +11,9 @@ class Event(Enum):
   CS_CONNECTED = "cs_connected"
   CS_DISCONNECTED = "cs_disconnected"
 
+  # WebServer event
+  WS_IP_NOT_ALLOWED = "ws_ip_not_allowed"
+
   # WebHook events
   WBH_INFO = "wbh_info"
   WBH_MESSAGE = "wbh_message"

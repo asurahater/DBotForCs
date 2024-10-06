@@ -33,10 +33,10 @@ def require_connection(func) -> callable:
   
   async def wrapper(*args, **kwargs) -> callable:
     if not rc.connected:
-      return
+      return None
     
     if not (await rc.is_connected()):
-      return
+      return None
 
     return await func(*args, **kwargs)
   
@@ -142,29 +142,29 @@ async def check_steam(steam_id: str):
 # -- route_get_offline_players
 @nsroute.create_route("/redis/get_offline_players")
 @require_connection
-async def route_get_offline_players():
-  last_players = (await rc.list_get(RedisTable.LastPlayers, 0))
+async def route_get_offline_players() -> list:
+  last_players: list = await rc.list_get(RedisTable.LastPlayers, 0)
   return [player.decode('utf-8') for player in last_players]
 
 # -- route_get_banned_players
 @nsroute.create_route("/redis/get_banned_players")
 @require_connection
-async def route_get_banned_players():
-  banned_players = (await rc.list_get(RedisTable.BannedPlayers, 0))
+async def route_get_banned_players() -> list:
+  banned_players: list = await rc.list_get(RedisTable.BannedPlayers, 0)
   return [player.decode('utf-8') for player in banned_players]
 
 # -- route_get_map_list_active
 @nsroute.create_route("/redis/get_map_list_active")
 @require_connection
-async def route_get_map_list_active():
-  map_list = (await rc.list_get(RedisTable.MapListActive, 0))
+async def route_get_map_list_active() -> list:
+  map_list: list = await rc.list_get(RedisTable.MapListActive, 0)
   return [map.decode('utf-8') for map in map_list]
 
 # -- route_get_map_list_all
 @nsroute.create_route("/redis/get_map_list_all")
 @require_connection
-async def route_get_map_list_all():
-  map_list = (await rc.list_get(RedisTable.MapListAll, 0 ))
+async def route_get_map_list_all() -> list:
+  map_list: list = await rc.list_get(RedisTable.MapListAll, 0 )
   return [map.decode('utf-8') for map in map_list]
 
 # -- route_update_map_list

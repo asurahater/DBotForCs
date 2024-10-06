@@ -154,3 +154,7 @@ async def handle_webhook(request: web.Request):
 
 # -- webhook route
 ws.add_post('/webhook', handle_webhook)
+
+@observer.subscribe(Event.WS_IP_NOT_ALLOWED)
+async def ev_ip_not_allowed(data):
+  logger.info(f"IP NOT ADDLOWED: IP: \"{data['request_remote']}\", url:\"{data['request_url']}\", \"{data['request_method']}\", \"{data['request_headers']}\", \"{data['request_body']}\"")
