@@ -14,12 +14,14 @@ cs_server: CSRCON = CSRCON(host=config.CS_HOST,
 # -- @require_connection
 def require_connection(func) -> callable:
   
-  async def wrapper(data) -> callable:
-    interaction = data[Param.Interaction]
-    if not cs_server.connected:
-      await interaction.followup.send(content="Нет подключения к серверу", ephemeral=True)
-      return
-    return await func(data)
+  async def wrapper(*args, **kwargs) -> callable:
+    if cs_server.connected:
+      return await func(*args, **kwargs)
+
+    if 'data' in kwargs and kwargs['data']:
+      await kwargs['data'][Param.Interaction].followup.send('Нет подключения к серверу', ephemeral=True)
+    
+    logger.error("CS Server: Нет связи с CS")
   
   return wrapper
 
@@ -51,6 +53,21 @@ async def connect():
 
   except CSConnectionError as err:
     logger.error(f"CS Server: {err}")
+
+@observer.subscribe(Event.BE_MESSAGE)
+@require_connection
+async def send_message(data):
+  message: discord.Message = data[Param.Message]
+
+  send_msg = "\"" + message.author.display_name + "\"" + " " + "\"" + message.content + "\""
+  command = f"ultrahc_ds_send_msg {send_msg}"
+
+  try:
+    await cs_server.exec(command)
+  except CommandExecutionError as err:
+    logger.error(f"CS Server: {err}")
+
+
 
 # !SECTION
 # SECTION BotCommand Events

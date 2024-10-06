@@ -90,9 +90,9 @@ async def get_member(discord_id: int) -> discord.Member:
 
   return member
   
-# -- ev_message
+# -- ev_message_from_cs
 @observer.subscribe(Event.WBH_MESSAGE)
-async def ev_message(data) -> None:
+async def ev_message_from_cs(data) -> None:
   global cs_chat_duser_msg
   message = data['message']
 
@@ -124,3 +124,8 @@ async def ev_info(data) -> None:
   else:
     await send_status_message(info_message, channel)
 
+# -- ev_message_from_dis
+@observer.subscribe(Event.BE_MESSAGE)
+async def ev_message_from_dis(data) -> None:
+  global cs_chat_duser_msg
+  cs_chat_duser_msg = True

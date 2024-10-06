@@ -20,12 +20,11 @@ def require_connection(func) -> callable:
   async def wrapper(*args, **kwargs) -> callable:
     if mysql.is_connected():
       return await func(*args, **kwargs)
-    else:
-      if 'data' in kwargs and kwargs['data']:
-        await kwargs['data'][Param.Interaction].followup.send('Нет соединения с базой данных', ephemeral=True)
+    
+    if 'data' in kwargs and kwargs['data']:
+      await kwargs['data'][Param.Interaction].followup.send('Нет соединения с базой данных', ephemeral=True)
         
-      logger.error("MySQL: Нет связи с БД")
-      return
+    logger.error("MySQL: Нет связи с БД")
   
   return wrapper
 
@@ -249,7 +248,22 @@ async def ev_map_update(data):
 
   # Обновляем в редис
   await nsroute.call_route("/redis/update_map_list", "update", data['map_name'], data['activated'])
-    
+  
+# -- ev_member_update
+@observer.subscribe(Event.BE_MEMBER_UPDATE)
+@require_connection
+async def ev_member_update(data):
+  ds_id = data['user_id']
+  new_username = data['new_username']
+
+  query = "UPDATE users SET ds_display_name = %s WHERE discord_id = %s"
+  query_values = (new_username, str(ds_id))
+
+  try:
+    await mysql.execute_change(query, query_values)
+  except QueryError as err:
+    logger.error(f"{err}")
+
 # -- (route) check_user
 @nsroute.create_route("/check_user")
 @require_connection
