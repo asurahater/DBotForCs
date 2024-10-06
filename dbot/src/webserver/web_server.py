@@ -65,12 +65,12 @@ class WebServer:
     """
     client_ip: str = request.remote
     if client_ip not in self.allowed_ips:
-      observer.notify(Event.WS_IP_NOT_ALLOWED, {
+      await observer.notify(Event.WS_IP_NOT_ALLOWED, {
         "request_remote": request.remote,
         "request_url": request.url,
         "request_method": request.method,
         "request_headers": request.headers,
-        "request_body": (await request.body())
+        "request_body": await request.text()
       })
       return web.Response(status=403, text="Access Forbidden: Your IP is not allowed.")
     

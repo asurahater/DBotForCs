@@ -10,14 +10,14 @@ import config
 # -- init
 ws: WebServer = WebServer(host=config.WEB_HOST_ADDRESS,
                           port=config.WEB_SERVER_PORT,
-                          allowed_ips=config.CS_HOST)
+                          allowed_ips=config.WEB_ALLOWED_IPS)
 
 # -- Events
 @observer.subscribe(Event.BE_READY)
 async def run_ws():
   try:
     await ws.run_webserver()
-    logger.info(f"WebServer: Сервер запущен на {ws.host}:{ws.port}")
+    logger.info(f"WebServer: Сервер запущен на {ws.host}:{ws.port}. Список разрешенных IP: {ws.allowed_ips}")
   except Exception as err:
     logger.error(err)
   
